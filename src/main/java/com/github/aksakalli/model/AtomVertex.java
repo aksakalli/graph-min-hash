@@ -48,18 +48,17 @@ public class AtomVertex implements Serializable {
 
         AtomVertex that = (AtomVertex) o;
 
-        if (position != that.position) return false;
-        return atomId == that.atomId;
-
+        return position == that.position && atomId == that.atomId;
     }
 
+    /**
+     * Position does not effect the hash of Atom.
+     * The same atom chain can be located different positions.
+     *
+     * @return atomId
+     */
     @Override
     public int hashCode() {
-//        int result = position;
-//        result = 31 * result + atomId;
-//        return result;
-
-        // meaning of life
-        return 42 * atomId;
+        return atomId;
     }
 }

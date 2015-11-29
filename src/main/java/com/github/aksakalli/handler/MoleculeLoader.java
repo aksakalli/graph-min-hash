@@ -1,15 +1,15 @@
 package com.github.aksakalli.handler;
 
 import com.github.aksakalli.model.AtomVertex;
-import com.github.aksakalli.model.MoleculeGraph;
+import com.github.aksakalli.model.Molecule;
 import org.jgrapht.UndirectedGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -25,9 +25,9 @@ import java.util.stream.Stream;
  * AtomType, AtomType, ...
  * Bond (AtomId, AtomId, BondType), Bond, ...
  */
-public class GraphLoader {
+public class MoleculeLoader {
 
-    final Logger logger = LoggerFactory.getLogger(GraphLoader.class);
+    private final Logger logger = LoggerFactory.getLogger(MoleculeLoader.class);
 
     private static final String DEFAULT_DATASET_FILE = "datasets/AIDS99.txt";
     private Scanner scanner;
@@ -35,31 +35,28 @@ public class GraphLoader {
     /**
      * Reads from default file
      */
-    public GraphLoader() {
+    public MoleculeLoader() {
         this(DEFAULT_DATASET_FILE);
     }
 
     /**
-     *
      * @param filePath path to datasetfile, format should n
      */
-    public GraphLoader(String filePath) {
+    public MoleculeLoader(String filePath) {
         logger.info("Dataset file loading...");
-        ClassLoader classLoader = getClass().getClassLoader();
-
-        //TODO: handle exception
-        File file = new File(classLoader.getResource(filePath).getFile());
 
         try {
+            ClassLoader classLoader = getClass().getClassLoader();
+            File file = new File(classLoader.getResource(filePath).getFile());
             this.scanner = new Scanner(file);
-            logger.info("Dataset scanner was initialized.");
-        } catch (IOException e) {
-            logger.error("Dataset file not found!");
-            e.printStackTrace();
+            logger.info("Dataset scanner was initialized successfully.");
+        } catch (NullPointerException|FileNotFoundException ex) {
+            logger.error("Dataset file could not be initialized! Terminating the program...", ex);
+            System.exit(1);
         }
     }
 
-    public MoleculeGraph nextGraph() {
+    public Molecule nextMolecule() {
 
         if (!scanner.hasNextLine()) {
             logger.info("End of data stream file");
@@ -75,8 +72,8 @@ public class GraphLoader {
             return null;
         }
 
-        UndirectedGraph<AtomVertex, DefaultWeightedEdge> structureGraph
-                = new SimpleGraph<>(DefaultWeightedEdge.class);
+        UndirectedGraph<AtomVertex, DefaultEdge> structureGraph
+                = new SimpleGraph<>(DefaultEdge.class);
         List<AtomVertex> vertices = new ArrayList<>();
 
         // Reading atom line
@@ -103,7 +100,7 @@ public class GraphLoader {
                         vertices.get(boundInfo[i * 3] - 1),
                         vertices.get(boundInfo[i * 3 + 1] - 1)));
 
-        return new MoleculeGraph(Integer.parseInt(metaInfo[1]), Integer.parseInt(metaInfo[2]), structureGraph);
+        return new Molecule(Integer.parseInt(metaInfo[1]), Integer.parseInt(metaInfo[2]), structureGraph);
     }
 
 }
