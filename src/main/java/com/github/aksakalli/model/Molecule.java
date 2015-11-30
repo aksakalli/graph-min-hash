@@ -75,6 +75,7 @@ public class Molecule {
                 iterator.next();
                 List<AtomVertex> path = listener.getPath();
                 if (path.size() <= PATH_EXTRACTION_LIMIT) {
+                    //System.out.println(Arrays.deepToString(path.toArray()));
                     fingerprintSet.add(Arrays.deepHashCode(path.toArray()));
                 }
             }
