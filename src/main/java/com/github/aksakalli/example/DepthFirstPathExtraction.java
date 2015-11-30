@@ -11,10 +11,10 @@ import org.jgrapht.traverse.GraphIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Simple Path extraction toy example with DFS [Ralaivola et al. 2005]
- *
  */
 public class DepthFirstPathExtraction {
 
@@ -33,10 +33,8 @@ public class DepthFirstPathExtraction {
 
         @Override
         public void vertexTraversed(VertexTraversalEvent<String> e) {
-            String vertex = e.getVertex();
             // add new visited graph to path
-            path.add(vertex);
-            printPath();
+            path.add(e.getVertex());
         }
 
         @Override
@@ -45,8 +43,8 @@ public class DepthFirstPathExtraction {
             path.remove(path.size() - 1);
         }
 
-        private void printPath() {
-            System.out.println(Arrays.deepToString(path.toArray()));
+        public List<String> getPath() {
+            return path;
         }
     }
 
@@ -55,13 +53,18 @@ public class DepthFirstPathExtraction {
      */
     public static void main(String[] args) {
         UndirectedGraph<String, DefaultEdge> g = createToyGraph();
+        Set<String> vertices = g.vertexSet();
 
+        for (String vertex : vertices) {
+            GraphIterator<String, DefaultEdge> iterator = new DepthFirstIterator<>(g, vertex);
+            MyListener myListener = new MyListener(g);
+            iterator.addTraversalListener(myListener);
 
-        GraphIterator<String, DefaultEdge> iterator = new DepthFirstIterator<>(g, "B");
-        iterator.addTraversalListener(new MyListener(g));
-
-        while (iterator.hasNext()) {
-            iterator.next();
+            System.out.println("Start Vertex: " + vertex);
+            while (iterator.hasNext()) {
+                iterator.next();
+                System.out.println(Arrays.deepToString(myListener.getPath().toArray()));
+            }
         }
     }
 
