@@ -1,15 +1,10 @@
 package com.github.aksakalli.model;
 
-import com.github.aksakalli.handler.MoleculeTraversalListener;
+import org.jgrapht.Graphs;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
-import org.jgrapht.traverse.GraphIterator;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Molecule modeled as Graph
@@ -53,6 +48,8 @@ public class Molecule {
         return structureGraph;
     }
 
+    private Set<Integer> fingerprintSet;
+
     /**
      * It extracts the graph in substructures and returns the set of
      * computed fingerprints. It uses DFS algorithm to get simple paths.
@@ -60,27 +57,32 @@ public class Molecule {
      * @return set of all extracted substructures' fingerprints
      */
     public Set<Integer> getFingerprintSet() {
-        Set<Integer> fingerprintSet = new TreeSet<>();
+        if (fingerprintSet != null) {
+            return this.fingerprintSet;
+        }
 
-        MoleculeTraversalListener listener = new MoleculeTraversalListener(this.structureGraph);
+        fingerprintSet = new TreeSet<>();
         Set<AtomVertex> atoms = this.structureGraph.vertexSet();
-
-        //extract paths starting from all atoms
         for (AtomVertex a : atoms) {
-            //give root atom for each
-            GraphIterator<AtomVertex, DefaultEdge> iterator = new DepthFirstIterator<>(this.structureGraph, a);
-            iterator.addTraversalListener(listener);
-
-            while (iterator.hasNext()) {
-                iterator.next();
-                List<AtomVertex> path = listener.getPath();
-                if (path.size() <= PATH_EXTRACTION_LIMIT) {
-                    //System.out.println(Arrays.deepToString(path.toArray()));
-                    fingerprintSet.add(Arrays.deepHashCode(path.toArray()));
-                }
-            }
+            dfsAllPathTravel(new ArrayList<>(),a);
         }
 
         return fingerprintSet;
+    }
+
+    private void dfsAllPathTravel(List<AtomVertex> path, AtomVertex vertex) {
+
+        List<AtomVertex> nextPath = new ArrayList<>();
+        nextPath.addAll(path);
+        nextPath.add(vertex);
+        fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
+        //System.out.println(Arrays.deepToString(nextPath.toArray()));
+
+        List<AtomVertex> neighbors = Graphs.neighborListOf(structureGraph, vertex);
+        for (AtomVertex n : neighbors) {
+            if (nextPath.size() <= PATH_EXTRACTION_LIMIT && !nextPath.contains(n)) {
+                dfsAllPathTravel(nextPath, n);
+            }
+        }
     }
 }

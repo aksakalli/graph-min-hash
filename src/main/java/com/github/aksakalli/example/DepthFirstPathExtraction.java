@@ -1,5 +1,7 @@
 package com.github.aksakalli.example;
 
+import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.event.TraversalListenerAdapter;
 import org.jgrapht.event.VertexTraversalEvent;
@@ -8,10 +10,7 @@ import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 import org.jgrapht.traverse.GraphIterator;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Simple Path extraction toy example with DFS [Ralaivola et al. 2005]
@@ -66,8 +65,29 @@ public class DepthFirstPathExtraction {
                 System.out.println(Arrays.deepToString(myListener.getPath().toArray()));
             }
         }
+
+        System.out.println("DFS with all paths and no cycles");
+        for (String vertex : vertices) {
+            System.out.println("Start Vertex: " + vertex);
+            dfs(new ArrayList<>(), vertex, g);
+        }
     }
 
+
+    private static void dfs(List<String> path, String vertex, UndirectedGraph<String, DefaultEdge> g) {
+
+        List<String> nextPath = new ArrayList<>();
+        nextPath.addAll(path);
+        nextPath.add(vertex);
+        System.out.println(Arrays.deepToString(nextPath.toArray()));
+
+        List<String> neighbors = Graphs.neighborListOf(g, vertex);
+        for (String n : neighbors) {
+            if (!nextPath.contains(n)) {
+                dfs(nextPath, n, g);
+            }
+        }
+    }
 
     /**
      * Creates toy example at section 3.2
