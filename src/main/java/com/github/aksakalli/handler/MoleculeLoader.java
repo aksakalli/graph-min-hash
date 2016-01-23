@@ -1,10 +1,10 @@
 package com.github.aksakalli.handler;
 
 import com.github.aksakalli.model.AtomVertex;
+import com.github.aksakalli.model.BoundEdge;
 import com.github.aksakalli.model.Molecule;
 import org.jgrapht.UndirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class MoleculeLoader {
             File file = new File(classLoader.getResource(filePath).getFile());
             this.scanner = new Scanner(file);
             logger.info("Dataset scanner was initialized successfully.");
-        } catch (NullPointerException|FileNotFoundException ex) {
+        } catch (NullPointerException | FileNotFoundException ex) {
             logger.error("Dataset file could not be initialized! Terminating the program...", ex);
             System.exit(1);
         }
@@ -72,8 +72,8 @@ public class MoleculeLoader {
             return null;
         }
 
-        UndirectedGraph<AtomVertex, DefaultEdge> structureGraph
-                = new SimpleGraph<>(DefaultEdge.class);
+        UndirectedGraph<AtomVertex, BoundEdge> structureGraph
+                = new SimpleWeightedGraph<>(BoundEdge.class);
         List<AtomVertex> vertices = new ArrayList<>();
 
         // Reading atom line
@@ -98,7 +98,8 @@ public class MoleculeLoader {
         IntStream.range(0, boundInfo.length / 3)
                 .forEach(i -> structureGraph.addEdge(
                         vertices.get(boundInfo[i * 3] - 1),
-                        vertices.get(boundInfo[i * 3 + 1] - 1)));
+                        vertices.get(boundInfo[i * 3 + 1] - 1),
+                        new BoundEdge(boundInfo[i * 3 + 2])));
 
         return new Molecule(Integer.parseInt(metaInfo[1]), Integer.parseInt(metaInfo[2]), structureGraph);
     }

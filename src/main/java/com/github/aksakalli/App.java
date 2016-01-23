@@ -4,12 +4,12 @@ import com.github.aksakalli.handler.MinHasher;
 import com.github.aksakalli.handler.MoleculeLoader;
 import com.github.aksakalli.model.ExperimentMolecule;
 import com.github.aksakalli.model.Molecule;
-import com.github.aksakalli.util.Jaccard;
-import com.github.aksakalli.util.Tanimoto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Main flow of Graph Min Hash
@@ -20,10 +20,13 @@ public class App {
 
     public static void main(String[] args) {
         logger.info("Welcome to Graph Min Hash!");
+        simplePathExperiment();
+    }
 
 
+    static void simplePathExperiment() {
         MoleculeLoader moleculeLoader = new MoleculeLoader();
-        MinHasher minHasher = new MinHasher();
+        MinHasher minHasher = new MinHasher(128);
         List<ExperimentMolecule> molecules = new ArrayList<>();
         List<ExperimentMolecule> activeMolecules = new ArrayList<>();
 
@@ -43,6 +46,19 @@ public class App {
             }
         }
 
+//
+//        List<Double> accuracyGraph = IntStream.range(1, 100).mapToObj(i ->
+//                activeMolecules.stream()
+//                        .map(am -> molecules.stream().sorted(Comparator.comparing(m -> 1 - am.getSimilarity(m)))
+//                                .limit(i)
+//                                .filter(m -> m.getClassification() == 2)
+//                                .count())
+//                        .mapToDouble(a -> a)
+//                        .average()
+//                        .getAsDouble())
+//                .collect(Collectors.toList());
+//        logger.info("accuracy: {}", Arrays.toString(accuracyGraph.toArray()));
+
         double accuracy = activeMolecules.stream()
                 .map(am -> molecules.stream().sorted(Comparator.comparing(m -> 1 - am.getSimilarity(m)))
                         .limit(10)
@@ -51,23 +67,21 @@ public class App {
                 .mapToDouble(a -> a)
                 .average()
                 .getAsDouble();
+//        double tolerantAccuracy = activeMolecules.stream()
+//                .map(am -> molecules.stream().sorted(Comparator.comparing(m -> 1 - am.getSimilarity(m)))
+//                        .limit(10)
+//                        .filter(m -> m.getClassification() != 0)
+//                        .count())
+//                .mapToDouble(a -> a)
+//                .average()
+//                .getAsDouble();
 
-        double tolerantAccuracy = activeMolecules.stream()
-                .map(am -> molecules.stream().sorted(Comparator.comparing(m -> 1 - am.getSimilarity(m)))
-                        .limit(10)
-                        .filter(m -> m.getClassification() != 0)
-                        .count())
-                .mapToDouble(a -> a)
-                .average()
-                .getAsDouble();
         //Active - 2, Moderate - 1, Inactive -0
-        logger.info("total molecules: {}",molecules.size());
-        logger.info("active molecules: {}",activeMolecules.size());
-        logger.info("moderate molecules: {}",molecules.stream().filter(m -> m.getClassification() == 1).count());
+        logger.info("total molecules: {}", molecules.size());
+        logger.info("active molecules: {}", activeMolecules.size());
+        logger.info("moderate molecules: {}", molecules.stream().filter(m -> m.getClassification() == 1).count());
         logger.info("accuracy: {}", accuracy);
-        logger.info("tolerantAccuracy: {}", tolerantAccuracy);
-
+        //logger.info("tolerantAccuracy: {}", tolerantAccuracy);
     }
-
 
 }

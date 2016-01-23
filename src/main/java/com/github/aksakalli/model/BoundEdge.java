@@ -28,19 +28,5 @@ public class BoundEdge implements Serializable {
         return "" + bondType;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
 
-        BoundEdge boundEdge = (BoundEdge) o;
-
-        return bondType == boundEdge.bondType;
-
-    }
-
-    @Override
-    public int hashCode() {
-        return bondType;
-    }
 }

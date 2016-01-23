@@ -2,7 +2,7 @@ package com.github.aksakalli.model;
 
 import org.jgrapht.Graphs;
 import org.jgrapht.UndirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.alg.BronKerboschCliqueFinder;
 
 import java.util.*;
 
@@ -20,7 +20,7 @@ public class Molecule {
     private int classification;
 
     //Change DefaultWeightedEdge to BoundEdge!
-    private UndirectedGraph<AtomVertex, DefaultEdge> structureGraph;
+    private UndirectedGraph<AtomVertex, BoundEdge> structureGraph;
 
     public int getAtomCount() {
         return structureGraph.vertexSet().size();
@@ -30,7 +30,7 @@ public class Molecule {
         return structureGraph.edgeSet().size();
     }
 
-    public Molecule(int nciId, int classification, UndirectedGraph<AtomVertex, DefaultEdge> structureGraph) {
+    public Molecule(int nciId, int classification, UndirectedGraph<AtomVertex, BoundEdge> structureGraph) {
         this.nciId = nciId;
         this.classification = classification;
         this.structureGraph = structureGraph;
@@ -44,7 +44,7 @@ public class Molecule {
         return classification;
     }
 
-    public UndirectedGraph<AtomVertex, DefaultEdge> getStructureGraph() {
+    public UndirectedGraph<AtomVertex, BoundEdge> getStructureGraph() {
         return structureGraph;
     }
 
@@ -64,7 +64,7 @@ public class Molecule {
         fingerprintSet = new TreeSet<>();
         Set<AtomVertex> atoms = this.structureGraph.vertexSet();
         for (AtomVertex a : atoms) {
-            dfsAllPathTravel(new ArrayList<>(),a);
+            dfsAllPathTravel(new ArrayList<>(), a);
         }
 
         return fingerprintSet;
@@ -75,7 +75,10 @@ public class Molecule {
         List<AtomVertex> nextPath = new ArrayList<>();
         nextPath.addAll(path);
         nextPath.add(vertex);
-        fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
+
+
+        //fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
+        fingerprintSet.add(fingerprintAtomChain(nextPath));
         //System.out.println(Arrays.deepToString(nextPath.toArray()));
 
         List<AtomVertex> neighbors = Graphs.neighborListOf(structureGraph, vertex);
@@ -84,5 +87,25 @@ public class Molecule {
                 dfsAllPathTravel(nextPath, n);
             }
         }
+    }
+
+    private int fingerprintAtomChain(List<AtomVertex> path) {
+        if (path == null)
+            return 0;
+
+        int result = 1;
+        AtomVertex previousAtom = null;
+
+        for (AtomVertex a : path) {
+            if (previousAtom != null) {
+                result = 31 * result + structureGraph.getEdge(previousAtom, a).getBondType() + 63;
+            }
+
+            result = 31 * result + a.getAtomId();
+            previousAtom = a;
+        }
+
+
+        return result;
     }
 }
