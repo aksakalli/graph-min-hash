@@ -4,12 +4,13 @@ import com.github.aksakalli.handler.MinHasher;
 import com.github.aksakalli.handler.MoleculeLoader;
 import com.github.aksakalli.model.ExperimentMolecule;
 import com.github.aksakalli.model.Molecule;
-import com.github.aksakalli.util.Jaccard;
-import com.github.aksakalli.util.Tanimoto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Main flow of Graph Min Hash
@@ -33,6 +34,11 @@ public class App {
                 break;
             }
             //logger.info("molecule: {}, class: {}", molecule.getNciId(), molecule.getClassification());
+            Set<Integer> fingerprints = molecule.getFingerprintSet();
+
+            if (fingerprints.isEmpty()) {
+                continue;
+            }
             List<Integer> sketch = minHasher.getSketchFromFingerprintSet(molecule.getFingerprintSet());
             //logger.info("sketch: {}", Arrays.deepToString(sketch.toArray()));
 
@@ -61,9 +67,9 @@ public class App {
                 .average()
                 .getAsDouble();
         //Active - 2, Moderate - 1, Inactive -0
-        logger.info("total molecules: {}",molecules.size());
-        logger.info("active molecules: {}",activeMolecules.size());
-        logger.info("moderate molecules: {}",molecules.stream().filter(m -> m.getClassification() == 1).count());
+        logger.info("total molecules: {}", molecules.size());
+        logger.info("active molecules: {}", activeMolecules.size());
+        logger.info("moderate molecules: {}", molecules.stream().filter(m -> m.getClassification() == 1).count());
         logger.info("accuracy: {}", accuracy);
         logger.info("tolerantAccuracy: {}", tolerantAccuracy);
 

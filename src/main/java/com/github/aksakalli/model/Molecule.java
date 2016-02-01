@@ -64,7 +64,7 @@ public class Molecule {
         fingerprintSet = new TreeSet<>();
         Set<AtomVertex> atoms = this.structureGraph.vertexSet();
         for (AtomVertex a : atoms) {
-            dfsAllPathTravel(new ArrayList<>(),a);
+            dfsAllPathTravel(new ArrayList<>(), a);
         }
 
         return fingerprintSet;
@@ -75,7 +75,23 @@ public class Molecule {
         List<AtomVertex> nextPath = new ArrayList<>();
         nextPath.addAll(path);
         nextPath.add(vertex);
-        fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
+
+
+        int i = nextPath.size();
+        for (AtomVertex a : nextPath) {
+            i--;
+            if (i < nextPath.size() / 2) {
+                fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
+                break;
+            }
+            if (a.hashCode() < nextPath.get(i).hashCode()) {
+                Collections.reverse(nextPath);
+                fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
+                Collections.reverse(nextPath);
+                break;
+            }
+        }
+
         //System.out.println(Arrays.deepToString(nextPath.toArray()));
 
         List<AtomVertex> neighbors = Graphs.neighborListOf(structureGraph, vertex);

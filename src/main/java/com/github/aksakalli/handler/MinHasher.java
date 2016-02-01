@@ -16,7 +16,7 @@ public class MinHasher {
 
     final private static Logger logger = LoggerFactory.getLogger(MinHasher.class);
 
-    private static final int DEFAULT_SKETCH_SIZE = 16;
+    private static final int DEFAULT_SKETCH_SIZE = 128;
     private int sketchSize;
     private List<Integer> hashFunctions;
 
