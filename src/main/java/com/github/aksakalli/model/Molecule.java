@@ -77,8 +77,8 @@ public class Molecule {
         nextPath.add(vertex);
 
 
-        //fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
-        fingerprintSet.add(fingerprintAtomChain(nextPath));
+        fingerprintSet.add(Arrays.deepHashCode(nextPath.toArray()));
+//        fingerprintSet.add(fingerprintAtomChain(nextPath));
         //System.out.println(Arrays.deepToString(nextPath.toArray()));
 
         List<AtomVertex> neighbors = Graphs.neighborListOf(structureGraph, vertex);
@@ -98,7 +98,8 @@ public class Molecule {
 
         for (AtomVertex a : path) {
             if (previousAtom != null) {
-                result = 31 * result + structureGraph.getEdge(previousAtom, a).getBondType() + 63;
+                BoundEdge bound = structureGraph.getEdge(previousAtom, a);
+                result = 31 * result + (bound == null ? 0 : bound.getBondType()) + 63;
             }
 
             result = 31 * result + a.getAtomId();
@@ -108,4 +109,38 @@ public class Molecule {
 
         return result;
     }
+
+    private Set<Integer> combinationfingerprints;
+
+    public Set<Integer> getCombinationFingerprintSet() {
+
+        combinationfingerprints = new TreeSet<>();
+        combination(new ArrayList<>(), this.structureGraph.vertexSet());
+        return combinationfingerprints;
+    }
+
+    private void combination(List<AtomVertex> path, Set<AtomVertex> atoms) {
+
+        if (path.size() == 4) {
+            combinationfingerprints.add(fingerprintAtomChain(path));
+            return;
+        }
+
+        for (AtomVertex a : atoms) {
+
+            //add to combination list
+            List<AtomVertex> nextPath = new ArrayList<>();
+            nextPath.addAll(path);
+            nextPath.add(a);
+
+            //remove from all set
+            Set<AtomVertex> nextAtoms = new HashSet<>();
+            nextAtoms.addAll(atoms);
+            nextAtoms.remove(a);
+
+            combination(nextPath, nextAtoms);
+
+        }
+    }
+
 }
