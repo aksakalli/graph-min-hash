@@ -49,6 +49,107 @@ public class Molecule {
 
 	private Set<Integer> fingerprintSet;
 
+	public Set<Integer> getTripletFingerprints() {
+		HashSet<Integer> fingerPrints = new HashSet<>();
+
+		ArrayList<AtomVertex> vertices = new ArrayList<>(structureGraph.vertexSet());
+		int n = this.getAtomCount();
+		// enumerate triplets of vertices
+		for (int i = 0; i<n-2; ++i) {
+			for (int j=i+1; j<n-1; ++j) {
+				for (int k=j+1; k<n; ++k) {
+					AtomVertex u = vertices.get(i);
+					AtomVertex v = vertices.get(j);
+					AtomVertex w = vertices.get(k);
+					BoundEdge uv = structureGraph.getEdge(u, v);
+					BoundEdge vw = structureGraph.getEdge(v, w);
+					BoundEdge wu = structureGraph.getEdge(w, u);
+					fingerPrints.add(getFingerPrintOfTriple(u, v, w, uv, vw, wu));
+					//					fingerPrints.add(getFingerPrintOfTripleFast(u, v, w, null, null, null));
+				}
+			}
+		}
+
+		return fingerPrints;
+	}
+
+	/**
+	 * 
+	 * @param u
+	 * @param v
+	 * @param w
+	 * @param uv
+	 * @param vw
+	 * @param wu
+	 * @return
+	 */
+	public static int getFingerPrintOfTriple(AtomVertex u, AtomVertex v, AtomVertex w, BoundEdge uv, BoundEdge vw, BoundEdge wu) {
+		LinkedList<String> path = new LinkedList<>();
+
+		path.add(u.getAtomCode());
+		if (uv != null) {
+			path.add(Integer.toString(uv.getBondType()));
+		} else {
+			path.add("null");
+		}
+
+		path.add(v.getAtomCode());
+		if (vw != null) {
+			path.add(Integer.toString(vw.getBondType()));
+		} else {
+			path.add("null");
+		}
+
+		path.add(w.getAtomCode());
+		if (wu != null) {
+			path.add(Integer.toString(wu.getBondType()));
+		} else {
+			path.add("null");
+		}	
+
+		LinkedList<String> reverse = new LinkedList<String>(path);
+		Collections.reverse(reverse);
+
+		int fingerprint = Integer.MAX_VALUE;
+		for (int i=0; i<3; ++i) {
+			int pathHash = String.join(" ", path).hashCode();
+			int reverseHash = String.join(" ", reverse).hashCode();
+			if (fingerprint > pathHash) {
+				fingerprint = pathHash;
+			}
+			if (fingerprint > reverseHash) {
+				fingerprint = reverseHash;
+			}
+			// put next vertex up front
+			path.add(path.removeFirst());
+			path.add(path.removeFirst());
+			reverse.add(reverse.removeFirst());
+			reverse.add(reverse.removeFirst());
+		}
+		return fingerprint;
+	}
+
+	public static int getFingerPrintOfTripleFast(AtomVertex u, AtomVertex v, AtomVertex w, BoundEdge uv, BoundEdge vw, BoundEdge wu) {
+		int fingerprint = 0;
+
+		fingerprint += u.getAtomId();
+		if (uv != null) {
+			fingerprint += uv.getBondType();
+		} 
+
+		fingerprint += v.getAtomId();
+		if (vw != null) {
+			fingerprint += vw.getBondType();
+		}
+
+		fingerprint += w.getAtomId();
+		if (wu != null) {
+			fingerprint += wu.getBondType();
+		}
+		return fingerprint;
+	}
+
+
 	/**
 	 * It extracts the graph in substructures and returns the set of
 	 * computed fingerprints. It uses DFS algorithm to get simple paths.
