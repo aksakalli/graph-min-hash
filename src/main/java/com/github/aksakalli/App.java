@@ -129,4 +129,66 @@ public class App {
 		//        logger.info("accuracy: {}", accuracy);
 		//logger.info("tolerantAccuracy: {}", tolerantAccuracy);
 	}
+	
+	static void tripletExperiment() {
+		MoleculeLoader moleculeLoader = new MoleculeLoader();
+		MinHasher minHasher = new MinHasher(64);
+		List<ExperimentMolecule> molecules = new ArrayList<>();
+
+		long totalFingerprints = 0;
+		long totalVertex = 0;
+		long totalEdge = 0;
+
+		for (Molecule molecule = moleculeLoader.nextMolecule(); molecule != null; molecule = moleculeLoader.nextMolecule()) {
+
+			Set<Integer> fingerprintSet = molecule.getTripletFingerprints();
+			totalFingerprints += fingerprintSet.size();
+			totalVertex += molecule.getAtomCount();
+			totalEdge += molecule.getBoundCount();
+
+			//skip molecules which has less number of atoms than limited shingle size
+			if (fingerprintSet.size() == 0) {
+				continue;
+			}
+			List<Integer> sketch = minHasher.getSketchFromFingerprintSet(fingerprintSet);
+
+//			logger.info("molecule: {}, class: {}, setSize: {}, sketchSize: {}", molecule.getNciId(), molecule.getClassification(), fingerprintSet.size(), sketch.size());
+
+			ExperimentMolecule experimentMolecule = new ExperimentMolecule(molecule.getNciId(), molecule.getClassification(), sketch);
+			molecules.add(experimentMolecule);
+		}
+
+		logger.info("totalFingerprints={}, toalVertex={}, totalEdge={}", totalFingerprints, totalVertex, totalEdge);
+		int total=molecules.size();
+		logger.info("totalFingerprints={}, toalVertex={}, totalEdge={}", (float)totalFingerprints/total, (float)totalVertex/total, (float)totalEdge/total);
+
+		int tn = 0, tp = 0, fp = 0, fn = 0;
+		for (ExperimentMolecule molecule : molecules) {
+
+			long activeCount = molecules.parallelStream().sorted(Comparator.comparing(m -> 1 - molecule.getSimilarity(m)))
+					.limit(6)
+					.filter(m -> m.getNciId() != molecule.getNciId())
+					.limit(3)
+					.filter(m -> m.getClassification() == 2)
+					.count();
+
+			if (activeCount > 1) {
+				if (molecule.getClassification() == 2) {
+					tp++;
+				} else {
+					fp++;
+				}
+			} else {
+				if (molecule.getClassification() == 2) {
+					fn++;
+				} else {
+					tn++;
+				}
+			}
+		}
+
+		logger.info("classification accuracy: {}", ((float) (tn + tp) / (fn + fp + tn + tp)));
+		logger.info("fn={}, fp={}, tn={}, tp={}, acc={}", fn, fp, tn, tp, ((float) (tn + tp) / (fn + fp + tn + tp)));
+		logger.info("total molecules: {}", molecules.size());
+	}
 }
