@@ -49,7 +49,17 @@ public class Molecule {
 
 	private Set<Integer> fingerprintSet;
 
-	public Set<Integer> getTripletFingerprints() {
+	
+	/**
+	 * Compute a set of fingerprints based on the set of all induced subgraphs of size 3.
+	 * 
+	 * This implementation enumerates all possible combinations of three vertices and collects the (possibly missing)
+	 * edges between the three vertices. A fingerprint is computed and added to the output for each such graph using
+	 * fingerprintTriple().
+	 * 
+	 * @return a HashSet<Integer>
+	 */
+	public Set<Integer> getTripletFingerprintsBruteForce() {
 		HashSet<Integer> fingerPrints = new HashSet<>();
 
 		ArrayList<AtomVertex> vertices = new ArrayList<>(structureGraph.vertexSet());
@@ -64,7 +74,40 @@ public class Molecule {
 					BoundEdge uv = structureGraph.getEdge(u, v);
 					BoundEdge vw = structureGraph.getEdge(v, w);
 					BoundEdge wu = structureGraph.getEdge(w, u);
-					fingerPrints.add(getFingerPrintOfTriple(u, v, w, uv, vw, wu));
+					fingerPrints.add(fingerprintTriple(u, v, w, uv, vw, wu));
+				}
+			}
+		}
+
+		return fingerPrints;
+	}
+	
+	
+	/**
+	 * Compute a set of fingerprints that is based on the triangles in a graph that contain at least two edges that are present.
+	 * For sparse graphs, this is much faster than brute force enumeration of all induced subgraphs of size 3.
+	 * 
+	 * For each vertex v of the graph, this implementation looks at all paths of length whose central vertex is v.
+	 * For each such path, it checks if there is an edge connecting the endpoints, or not. 
+	 * These (possibly open) triangles are then hashed to numbers by fingerprintTriple().  
+	 * @return a HashSet<Integer>
+	 */
+	public Set<Integer> getTripletFingerprints() {
+		HashSet<Integer> fingerPrints = new HashSet<>();
+
+		ArrayList<AtomVertex> vertices = new ArrayList<>(structureGraph.vertexSet());
+
+		// enumerate triangles
+		for (AtomVertex u : vertices) {
+			ArrayList<AtomVertex> neighbors = new ArrayList<>(Graphs.neighborListOf(structureGraph, u));
+			for (int i=0; i<neighbors.size(); ++i) {
+				AtomVertex v = neighbors.get(i);
+				BoundEdge vu = structureGraph.getEdge(v, u);
+				for (int j=i+1; j<neighbors.size(); ++j) {
+					AtomVertex w = neighbors.get(j);
+					BoundEdge wv = structureGraph.getEdge(w, v);
+					BoundEdge uw = structureGraph.getEdge(u, w);
+					fingerPrints.add(fingerprintTriple(u, w, v, uw, wv, vu));
 					//					fingerPrints.add(getFingerPrintOfTripleFast(u, v, w, null, null, null));
 				}
 			}
@@ -83,7 +126,7 @@ public class Molecule {
 	 * @param wu
 	 * @return
 	 */
-	public static int getFingerPrintOfTriple(AtomVertex u, AtomVertex v, AtomVertex w, BoundEdge uv, BoundEdge vw, BoundEdge wu) {
+	public static int fingerprintTriple(AtomVertex u, AtomVertex v, AtomVertex w, BoundEdge uv, BoundEdge vw, BoundEdge wu) {
 		LinkedList<String> path = new LinkedList<>();
 
 		path.add(u.getAtomCode());
@@ -129,7 +172,7 @@ public class Molecule {
 		return fingerprint;
 	}
 
-	public static int getFingerPrintOfTripleFast(AtomVertex u, AtomVertex v, AtomVertex w, BoundEdge uv, BoundEdge vw, BoundEdge wu) {
+	public static int fingerprintTripleFast(AtomVertex u, AtomVertex v, AtomVertex w, BoundEdge uv, BoundEdge vw, BoundEdge wu) {
 		int fingerprint = 0;
 
 		fingerprint += u.getAtomId();
